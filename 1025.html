@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>1025</title>
+</head>
+<body>
+<input type="file" id="uploadFiles" multiple="" onchange="upload(this)">
+<label for="uploadFiles"></label>
+<script type="text/javascript">
+// var input = document.querySelector('#uploadFiles');
+function upload(node){
+	var len = node.files.length;
+	if(len == 0)
+		return;
+	var readers = [];
+	for(let i=0; i<len; i++)
+		readers.push(new FileReader());
+	for(let i=0; i<node.files.length; i++){
+		let fileObj = {};
+		readers[i].addEventListener('load', function(e){
+			fileObj.url = readers[i].result;
+			var oldName = node.files[i].name;
+			fileObj.name = oldName.slice(0, oldName.lastIndexOf('.'))+'.cache';
+			var a = document.createElement('a');
+			document.body.appendChild(a);
+			a.href = fileObj.url;
+			a.download = fileObj.name;
+			a.click();
+		});
+		readers[i].readAsDataURL(node.files[i]);
+	}
+}
+</script>
+</body>
+</html>
