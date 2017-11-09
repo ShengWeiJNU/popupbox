@@ -12,35 +12,24 @@ sdf
 vsdfvb
 sdfvsdfvsfv</p>
 <!-- 放在最高层级 -->
-<div class="popupbox" onmousedown="upLevel(event)">
-	<div class="title" data-pressed="false" onmousedown="mousedown(event)">2333</div>
-	<div class="close" onclick="closeBox(event)"></div>
-	<!-- 排他性弹框有hide属性 -->
-	<!-- <div class="hide" onclick=""></div> -->
-</div>
-<div class="popupbox" onmousedown="upLevel(event)">
-	<div class="title" data-pressed="false" onmousedown="mousedown(event)">firefox</div>
-	<div class="close" onclick="closeBox(event)"></div>
-</div>
+<!-- <div class="popupbox" onmousedown="boxUp2Top(event)">
+	<input type="radio" name="popupbox" id="p1">
+	<label for="p1">
+		<div class="title" data-pressed="false" onmousedown="boxdragStart(event)">firefox</div>
+		<div class="close" onclick="closeBox(event)"></div>
+	</label>
+	排他性弹框有hide属性
+	<div class="hide" onclick=""></div>
+</div> -->
 <script type="text/javascript">
 var{log, dir, assert, info, table} = console;
-window.Mouse = {
-	dragStartMousePos: {
-		x: null,
-		y: null
-	},
-	dragStartTargetPos: {
-		x: null,
-		y: null
-	},
-	dragEle: null
-}
-var a = new Popupbox();
+var a = new Popupbox({width: 150, title: 'hahah', x: '30%', y: '0%'});
+var b = new Popupbox({height: 750, title: 'firefox developer edition', y: '30%'});
+var c = new Popupbox({width: 250, title: 'chrome', x: '100%', y: 'center'});
+var d = new Popupbox({width: 500, height: 500, title: 'edge', x: '0%', y: 'center'})
 
 function boxdragStart(e){
 	var currTag = e.currentTarget;
-	var inputId = currTag.parentNode.getAttribute('for');
-	document.getElementById(inputId).checked = true;
 	currTag.setAttribute('data-pressed', 'true');
 	Mouse.dragStartMousePos.x = e.pageX;
 	Mouse.dragStartMousePos.y = e.pageY;
@@ -49,25 +38,41 @@ function boxdragStart(e){
 	Mouse.dragEle = currTag;
 }
 
-function mousedown(e){
-	var currTag = e.currentTarget;
-	currTag.setAttribute('data-pressed', 'true');
-	Mouse.dragStartMousePos.x = e.pageX;
-	Mouse.dragStartMousePos.y = e.pageY;
-	Mouse.dragStartTargetPos.x = currTag.getBoundingClientRect().left;
-	Mouse.dragStartTargetPos.y = currTag.getBoundingClientRect().top;
-	Mouse.dragEle = currTag;
-}
-
-function upLevel(e){
+function boxUp2Top(e){
+	var curTar = e.currentTarget;
+	limitPopupBoxPos(curTar);
+	curTar.querySelector('input[type="radio"]').checked = true;
 	// 提升当前弹框到顶层
-	e.currentTarget.parentNode.appendChild(e.currentTarget);
+	curTar.parentNode.appendChild(e.currentTarget);
 }
 
 function closeBox(e){
-	var popupboxEle = e.currentTarget.parentNode;
-	e.currentTarget.parentNode.style.display = 'none';
+	var popupboxEle = e.currentTarget.parentNode.parentNode;
+	popupboxEle.style.display = 'none';
 	popupboxEle.parentNode.removeChild(popupboxEle);
+}
+
+function limitPopupBoxPos(boxEle){
+	var boundRect = boxEle.getBoundingClientRect();
+	var x = boundRect.x;
+	var y = boundRect.y;
+	var w = boundRect.width;
+	var winW = window.innerWidth;
+	var winH = window.innerHeight;
+	// 限制弹框位置，避免超出窗口后无法拖动
+	if(x+w < 20)
+		x = 20 - w;
+	else if(winW-x < 20)
+		x = winW - 20;
+	if(y < 0)
+		y = 0;
+	else if(winH-y < 20)
+		y = winH - 20;
+	// 防止拖动窗口导致丢失弹框，采用百分数定位
+	x = x / winW * 100 + '%';
+	y = y / winH * 100 + '%';
+	boxEle.style.left = x;
+	boxEle.style.top = y;
 }
 
 window.onmousemove = function(e){
@@ -75,26 +80,13 @@ window.onmousemove = function(e){
 		return;
 	}
 	if(Mouse.dragEle.getAttribute('data-pressed') == 'true'){
-		var popupboxEle = Mouse.dragEle.parentNode;
+		var popupboxEle = Mouse.dragEle.parentNode.parentNode;
 		var boundRect = popupboxEle.getBoundingClientRect();
 		var boxWidth = boundRect.width;
 		var boxHeight = boundRect.height;
-		var newX = Mouse.dragStartTargetPos.x - Mouse.dragStartMousePos.x + e.pageX;
-		var newY = Mouse.dragStartTargetPos.y - Mouse.dragStartMousePos.y + e.pageY;
-		// 限制弹框位置，避免超出窗口后无法拖动
-		if(newX+boxWidth < 20)
-			newX = 20 - boxWidth;
-		else if(window.innerWidth-newX < 20)
-			newX = window.innerWidth - 20;
-		if(newY < 0)
-			newY = 0;
-		else if(window.innerHeight-newY < 20)
-			newY = window.innerHeight - 20;
-		// 防止拖动窗口导致丢失弹框，采用百分数定位
-		newX = newX / window.innerWidth * 100;
-		newY = newY / window.innerHeight * 100;
-		popupboxEle.style.top = newY + '%';
-		popupboxEle.style.left = newX + '%';
+		popupboxEle.style.left = Mouse.dragStartTargetPos.x - Mouse.dragStartMousePos.x + e.pageX + 'px';
+		popupboxEle.style.top = Mouse.dragStartTargetPos.y - Mouse.dragStartMousePos.y + e.pageY + 'px';
+		limitPopupBoxPos(popupboxEle)
 	};
 }
 window.onmouseup = function(e){
